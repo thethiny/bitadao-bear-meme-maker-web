@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Film, Play, Download, AlertCircle, FileText, Music, Trash2, Edit, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Save, Images } from 'lucide-react';
+import { Upload, Film, Play, Download, AlertCircle, FileText, Music, Trash2, Edit, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Save, Images, RefreshCcw } from 'lucide-react';
 import { sliceVideoIntoImages, captureFrame } from '@/services/imageService';
 import { ffmpegService, fps } from '@/services/ffmpegService';
 import { ImageSlot, TimelineEntry } from '../types';
@@ -568,16 +568,19 @@ const Bitadao: React.FC = () => {
                  <a 
                    href={generatedVideoUrl} 
                    download="meme.mp4"
-                   className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition-colors"
+                   className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition-colors min-w-0"
+                   style={{ width: '50%' }}
                  >
                    <Download className="w-4 h-4" />
                    Download MP4
                  </a>
                  <button 
-                   onClick={() => setGeneratedVideoUrl(null)}
-                   className="px-4 text-zinc-400 hover:text-white"
+                   onClick={() => { setGeneratedVideoUrl(null); handleGenerate(); }}
+                   className="flex-1 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 rounded-lg transition-colors min-w-0"
+                   style={{ width: '50%' }}
                  >
-                   Close
+                   <RefreshCcw className="w-4 h-4" />
+                   Re-generate
                  </button>
               </div>
             </div>
