@@ -8,5 +8,6 @@ export type ImageSlot = {
     file: File | null;
     previewUrl: string | null;
     sourceVideo?: File | null;
+    videoUrl?: string;
     timestamp?: number;
 };

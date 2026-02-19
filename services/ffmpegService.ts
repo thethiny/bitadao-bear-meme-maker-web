@@ -12,6 +12,7 @@ declare global {
 class FFmpegService {
   private ffmpeg: any = null;
   private loaded = false;
+  private onLog: ((msg: string) => void) | null = null;
 
   async load() {
     if (this.loaded) return;
@@ -21,12 +22,15 @@ class FFmpegService {
     }
 
     const { createFFmpeg } = window.FFmpeg;
-
-    // Use FFmpeg Core 0.8.5. This version is older but it is the most reliable fallback
-    // for environments that do not support SharedArrayBuffer (missing COOP/COEP headers).
+    // Add logger to capture ffmpeg output
     this.ffmpeg = createFFmpeg({
       log: true,
       corePath: 'https://unpkg.com/@ffmpeg/core@0.8.5/dist/ffmpeg-core.js',
+      logger: ({ type, message }) => {
+        if (type === 'fferr' && this.onLog) {
+          this.onLog(message);
+        }
+      },
     });
 
     await this.ffmpeg.load();
@@ -37,11 +41,16 @@ class FFmpegService {
     images: { id: number; file: File }[],
     audioFile: File | null,
     timeline: TimelineEntry[],
-    onProgress: (progress: number, message: string) => void
+    fps: number,
+    onProgress: (progress: number, message: string) => void,
+    onLog?: (msg: string) => void
   ): Promise<string> {
     if (!this.ffmpeg || !this.loaded) await this.load();
     const ffmpeg = this.ffmpeg;
     const { fetchFile } = window.FFmpeg;
+
+  // Set log handler
+  this.onLog = onLog || null;
 
     // 1. Write Images to Virtual FS
     onProgress(10, "Processing images...");
@@ -88,19 +97,21 @@ class FFmpegService {
     onProgress(50, "Rendering video... (may take a moment)");
     
     const args = [
-      '-f', 'concat',
-      '-safe', '0',
-      '-i', 'list.txt',
-      ...audioInputArg,
-      '-c:v', 'libx264',
-      '-pix_fmt', 'yuv420p',
-      '-r', '30',
-      ...(audioFile ? ['-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-shortest'] : []),
-      '-preset', 'ultrafast',
-      'output.mp4'
+  '-f', 'concat',
+  '-safe', '0',
+  '-i', 'list.txt',
+  ...audioInputArg,
+  '-c:v', 'libx264',
+  '-pix_fmt', 'yuv420p',
+  '-r', fps.toString(),
+  ...(audioFile ? ['-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-shortest'] : []),
+  '-preset', 'ultrafast',
+  'output.mp4'
     ];
 
     await ffmpeg.run(...args);
+  // Remove log handler after run
+  this.onLog = null;
 
     onProgress(90, "Finalizing...");
     const data = ffmpeg.FS('readFile', 'output.mp4');

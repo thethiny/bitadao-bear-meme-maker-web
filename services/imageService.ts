@@ -1,6 +1,8 @@
 export const sliceVideoIntoImages = async (
   videoFile: File,
-  count: number
+  count: number,
+  start: number = 0,
+  end?: number
 ): Promise<{ file: File; timestamp: number }[]> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -25,19 +27,28 @@ export const sliceVideoIntoImages = async (
       canvas.height = video.videoHeight;
       
       const duration = video.duration;
-      // Safety margin: don't go exactly to the end to avoid black frames or seek errors
-      const safeDuration = Math.max(0, duration - 0.1); 
-      const step = safeDuration / count;
+      // Use trim points if provided
+      const trimStart = Math.max(0, start);
+      const trimEnd = typeof end === 'number' ? Math.min(duration, end) : Math.max(0, duration - 0.1);
+      // Calculate timestamps: first = trimStart, last = trimEnd, others evenly spaced
+      let timestamps: number[] = [];
+      if (count === 1) {
+        timestamps = [trimStart];
+      } else {
+        for (let i = 0; i < count; i++) {
+          // Linear interpolation
+          const t = trimStart + ((trimEnd - trimStart) * i) / (count - 1);
+          timestamps.push(t);
+        }
+      }
 
       const captureFrame = async (index: number) => {
-        if (index >= count) {
+        if (index >= timestamps.length) {
           URL.revokeObjectURL(url);
           resolve(results);
           return;
         }
-
-        const time = index * step;
-        video.currentTime = time;
+        video.currentTime = timestamps[index];
       };
 
       video.onseeked = () => {
