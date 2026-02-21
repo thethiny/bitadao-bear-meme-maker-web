@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { countTimelineFrames, framesToSeconds, estimateMemoryUsage } from '../services/timelineService';
 import SeekControls from '../components/SeekControls';
-import { Upload, Film, Play, Download, AlertCircle, FileText, Music, Trash2, Edit, X, Save, Images, RefreshCcw } from 'lucide-react';
+import { Upload, Film, Play, Download, AlertCircle, FileText, Music, Trash2, Edit, X, Save, Images, RefreshCcw, Hash, Clock, GaugeCircle, Monitor, MemoryStick } from 'lucide-react';
 import { sliceVideoIntoImages } from '../services/imageService';
 import { ffmpegService, fps } from '../services/ffmpegService';
 import { ImageSlot, TimelineEntry } from '../types';
@@ -327,7 +327,7 @@ const Bitadao: React.FC = () => {
   return (
   <div className="flex flex-col h-screen w-full">
     {/* Main content area, scrollable, takes all space above bottom bar */}
-  <div className="flex-1 min-h-0 overflow-y-auto pt-8 pr-8 pl-8 max-w-6xl mx-auto w-full space-y-8 pb-[64px]">
+  <div className="flex-1 min-h-0 overflow-y-auto pt-8 pr-8 pl-8 max-w-6xl mx-auto w-full space-y-8" style={{ paddingBottom: '2em' }}>
 
   {/* Video Preview & Trim Selection Modal */}
       {showVideoModal && uploadedVideo && videoUrl && videoMetadata && !trimReady && (
@@ -480,7 +480,8 @@ const Bitadao: React.FC = () => {
             onClick={clearAll}
             className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors border border-zinc-700 hover:border-zinc-600 flex items-center gap-2"
           >
-            <Trash2 className="w-4 h-4" /> Reset
+            <Trash2 className="w-4 h-4" />
+            <span className="hidden sm:inline">Reset</span>
           </button>
 
           <div
@@ -502,7 +503,7 @@ const Bitadao: React.FC = () => {
             style={{ position: 'relative' }}
           >
             <Images className="w-4 h-4" />
-            Batch Upload Images
+            <span className="hidden sm:inline">Batch Upload Images</span>
             {dragOverBatch && (
               <span className="absolute inset-0 flex items-center justify-center text-indigo-300 font-bold text-xs pointer-events-none">Drop images here</span>
             )}
@@ -543,7 +544,7 @@ const Bitadao: React.FC = () => {
             }}
           >
             <Film className="w-4 h-4" />
-            Auto-fill from Video
+            <span className="hidden sm:inline">Auto-fill from Video</span>
             {dragOverVideo && (
               <span className="absolute inset-0 flex items-center justify-center text-indigo-300 font-bold text-xs pointer-events-none">Drop video here</span>
             )}
@@ -819,7 +820,7 @@ const Bitadao: React.FC = () => {
                    style={{ width: '50%' }}
                  >
                    <Download className="w-4 h-4" />
-                   Download MP4
+                   <span className="hidden sm:inline">Download MP4</span>
                  </a>
                  <button 
                    onClick={() => { setGeneratedVideoUrl(null); handleGenerate(); }}
@@ -827,7 +828,7 @@ const Bitadao: React.FC = () => {
                    style={{ width: '50%' }}
                  >
                    <RefreshCcw className="w-4 h-4" />
-                   Re-generate
+                   <span className="hidden sm:inline">Re-generate</span>
                  </button>
               </div>
             </div>
@@ -901,15 +902,13 @@ const Bitadao: React.FC = () => {
         </div>
       </div>
     </div>
-  {/* Gap between content and bottom bar */}
-  <div className="w-full" style={{ height: 24 }} />
-  {/* Bottom Bar: Timeline info and VRAM/RAM estimate */}
+    {/* Bottom Bar: Timeline info and VRAM/RAM estimate */}
     <div
-      className="z-40 bg-zinc-900 border-t border-zinc-800 px-4 py-3 flex flex-row flex-wrap items-center justify-center gap-8 text-sm font-mono text-zinc-200 shadow-lg w-full bottom-bar-responsive"
-      style={{ position: 'fixed', left: 0, right: 0, bottom: 0, boxSizing: 'border-box', minHeight: '56px' }}>
-      <span>Total Frames: <span className="text-indigo-400">{timelineFrames}</span></span>
-      <span>Seconds: <span className="text-indigo-400">{timelineSeconds.toFixed(2)}</span></span>
-      <span>FPS:
+      className="z-40 bg-zinc-900 border-t border-zinc-800 px-4 py-3 flex flex-row flex-wrap items-center justify-center gap-8 text-sm font-mono text-zinc-200 shadow-lg w-full bottom-bar-responsive flex-shrink-0"
+      style={{ boxSizing: 'border-box', minHeight: '56px' }}>
+      <span className="flex items-center gap-1" title="Total number of frames in the generated video"><Hash className="w-4 h-4 text-indigo-400" /> <span className="hidden xs:inline">Total Frames:</span> <span className="text-indigo-400">{timelineFrames}</span></span>
+      <span className="flex items-center gap-1" title="Total duration of the video in seconds"><Clock className="w-4 h-4 text-indigo-400" /> <span className="hidden xs:inline">Seconds:</span> <span className="text-indigo-400">{timelineSeconds.toFixed(2)}</span></span>
+      <span className="flex items-center gap-1" title="Frames per second (FPS) of the output video"><GaugeCircle className="w-4 h-4 text-indigo-400" /> <span className="hidden xs:inline">FPS:</span>
         <input
           type="number"
           min={1}
@@ -922,10 +921,10 @@ const Bitadao: React.FC = () => {
         />
       </span>
       {videoResolution && (
-        <span>Resolution: <span className="text-indigo-400">{videoResolution.width}x{videoResolution.height}</span></span>
+        <span className="flex items-center gap-1" title="Resolution of the output video"><Monitor className="w-4 h-4 text-indigo-400" /> <span className="hidden xs:inline">Resolution:</span> <span className="text-indigo-400">{videoResolution.width}x{videoResolution.height}</span></span>
       )}
       {memoryEstimate !== null && (
-        <span>Estimated VRAM/RAM: <span className="text-indigo-400">{memoryEstimate} MB</span></span>
+        <span className="flex items-center gap-1" title="Estimated VRAM/RAM usage for rendering the video"><MemoryStick className="w-4 h-4 text-indigo-400" /> <span className="hidden xs:inline">Estimated VRAM/RAM:</span> <span className="text-indigo-400">{memoryEstimate} MB</span></span>
       )}
       {/* Responsive: On small screens, increase height and allow wrapping */}
       <style>{`
