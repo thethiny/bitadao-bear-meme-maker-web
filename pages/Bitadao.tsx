@@ -325,7 +325,9 @@ const Bitadao: React.FC = () => {
   };
 
   return (
-  <div className="pt-8 pr-8 pl-8 max-w-6xl mx-auto space-y-8 relative pb-20">
+  <div className="flex flex-col h-screen w-full">
+    {/* Main content area, scrollable, takes all space above bottom bar */}
+  <div className="flex-1 min-h-0 overflow-y-auto pt-8 pr-8 pl-8 max-w-6xl mx-auto w-full space-y-8 pb-[64px]">
 
   {/* Video Preview & Trim Selection Modal */}
       {showVideoModal && uploadedVideo && videoUrl && videoMetadata && !trimReady && (
@@ -584,10 +586,11 @@ const Bitadao: React.FC = () => {
                       : 'border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 hover:bg-zinc-900'
                 }
               `}
+              style={{ background: slot.previewUrl ? '#000' : undefined }}
             >
               {slot.previewUrl ? (
                 <>
-                  <img src={slot.previewUrl} alt={`Slot ${slot.id}`} className="w-full h-full object-cover" />
+                  <img src={slot.previewUrl} alt={`Slot ${slot.id}`} className="w-full h-full object-contain" style={{ background: '#000' }} />
                   
                   {/* Timestamp Indicator */}
                   {slot.timestamp !== undefined && (
@@ -645,8 +648,8 @@ const Bitadao: React.FC = () => {
       {/* Frame Editor Modal */}
       {editingSlot && editingSlot.sourceVideo && videoUrl && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-4xl flex flex-col gap-6 shadow-2xl max-h-[90vh]">
-            <div className="flex items-center justify-between shrink-0">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl max-h-[90vh] overflow-y-auto" style={{ padding: '1.5rem' }}>
+            <div className="flex items-center justify-between shrink-0 mb-2">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <Edit className="w-5 h-5 text-indigo-400" />
                 Adjust Frame {editingSlot.id}
@@ -655,27 +658,26 @@ const Bitadao: React.FC = () => {
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Video Player */}
-            <div className="flex-1 min-h-0 bg-black rounded-lg overflow-hidden relative border border-zinc-800 flex items-center justify-center" style={{ minHeight: 480, minWidth: 720 }}>
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                className="max-w-full max-h-full object-contain"
-                controls
-                onLoadedMetadata={() => {
-                  if (videoRef.current) {
-                    videoRef.current.currentTime = editorTime;
-                  }
-                }}
-                onSeeked={() => setEditorTime(videoRef.current?.currentTime || 0)}
-              />
-            </div>
-
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              controls
+              className="w-full max-w-2xl aspect-video bg-black rounded-lg mb-4 mx-auto"
+              style={{ maxHeight: 400, objectFit: 'cover' }}
+              onLoadedMetadata={() => {
+                if (videoRef.current) {
+                  videoRef.current.currentTime = editorTime;
+                }
+              }}
+              onTimeUpdate={() => {
+                if (videoRef.current) {
+                  setEditorTime(videoRef.current.currentTime);
+                }
+              }}
+            />
             {/* Seek Controls */}
             <div className="flex flex-col items-center w-full gap-4">
               <SeekControls value={editorTime} fps={fps} onChange={updateEditorTime} />
-
               {/* Seekbar below buttons */}
               <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden cursor-pointer mt-2"
                 onClick={(e) => {
@@ -689,7 +691,6 @@ const Bitadao: React.FC = () => {
               >
                 <div className="h-full bg-indigo-500 transition-all duration-100 ease-linear" style={{ width: `${(editorTime / (videoRef.current?.duration || 1)) * 100}%` }} />
               </div>
-
               {/* Cancel/Save Frame buttons spaced left/right */}
               <div className="flex w-full justify-between mt-4">
                 <button onClick={closeFrameEditor} className="px-4 py-2 text-zinc-400 hover:text-white text-sm font-medium hover:bg-zinc-800 rounded-lg transition-colors">
@@ -899,30 +900,46 @@ const Bitadao: React.FC = () => {
           )}
         </div>
       </div>
-      {/* Bottom Bar: Timeline info and VRAM/RAM estimate */}
-      <div className="fixed left-0 right-0 bottom-0 z-40 bg-zinc-900 border-t border-zinc-800 px-4 py-3 flex flex-row items-center justify-center gap-8 text-sm font-mono text-zinc-200 shadow-lg">
-        <span>Total Frames: <span className="text-indigo-400">{timelineFrames}</span></span>
-        <span>Seconds: <span className="text-indigo-400">{timelineSeconds.toFixed(2)}</span></span>
-        <span>FPS:
-          <input
-            type="number"
-            min={1}
-            max={120}
-            step={1}
-            value={customFps}
-            onChange={e => setCustomFps(Number(e.target.value) || fps)}
-            className="ml-2 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-indigo-400 w-20 font-mono"
-            style={{ width: 60 }}
-          />
-        </span>
-        {videoResolution && (
-          <span>Resolution: <span className="text-indigo-400">{videoResolution.width}x{videoResolution.height}</span></span>
-        )}
-        {memoryEstimate !== null && (
-          <span>Estimated VRAM/RAM: <span className="text-indigo-400">{memoryEstimate} MB</span></span>
-        )}
-      </div>
     </div>
+  {/* Gap between content and bottom bar */}
+  <div className="w-full" style={{ height: 24 }} />
+  {/* Bottom Bar: Timeline info and VRAM/RAM estimate */}
+    <div
+      className="z-40 bg-zinc-900 border-t border-zinc-800 px-4 py-3 flex flex-row flex-wrap items-center justify-center gap-8 text-sm font-mono text-zinc-200 shadow-lg w-full bottom-bar-responsive"
+      style={{ position: 'fixed', left: 0, right: 0, bottom: 0, boxSizing: 'border-box', minHeight: '56px' }}>
+      <span>Total Frames: <span className="text-indigo-400">{timelineFrames}</span></span>
+      <span>Seconds: <span className="text-indigo-400">{timelineSeconds.toFixed(2)}</span></span>
+      <span>FPS:
+        <input
+          type="number"
+          min={1}
+          max={120}
+          step={1}
+          value={customFps}
+          onChange={e => setCustomFps(Number(e.target.value) || fps)}
+          className="ml-2 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-indigo-400 w-20 font-mono"
+          style={{ width: 60 }}
+        />
+      </span>
+      {videoResolution && (
+        <span>Resolution: <span className="text-indigo-400">{videoResolution.width}x{videoResolution.height}</span></span>
+      )}
+      {memoryEstimate !== null && (
+        <span>Estimated VRAM/RAM: <span className="text-indigo-400">{memoryEstimate} MB</span></span>
+      )}
+      {/* Responsive: On small screens, increase height and allow wrapping */}
+      <style>{`
+        @media (max-width: 640px) {
+          .bottom-bar-responsive {
+            min-height: 96px !important;
+            padding-top: 1.5rem !important;
+            padding-bottom: 1.5rem !important;
+            gap: 1.25rem !important;
+          }
+        }
+      `}</style>
+    </div>
+  </div>
   );
 };
 
